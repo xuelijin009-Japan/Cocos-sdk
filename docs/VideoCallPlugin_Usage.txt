@@ -1,0 +1,44 @@
+# 插件使用说明（摘要版）
+#
+# 本文件仅作为代码内嵌的快速说明，完整的对接技术文档请参考项目文档。
+
+1. 核心接口头文件：
+   - include/VideoCallPlugin.h
+   - 所有导出 C 接口均以模块名前缀开头：
+     - rtcEngine_*：引擎管理
+     - channel_*：频道管理
+     - video_* / audio_*：音视频控制
+     - videoRender_*：视频渲染
+     - permission_*：移动端权限
+
+2. 典型接入流程（Cocos-2d-x C++）：
+   - 实现 IVideoCallCallback 派生类，处理各类回调；
+   - 启动游戏时调用：
+     rtcEngine_init(appId, debugMode, callbackInstance);
+   - 创建用于渲染的 Sprite，并调用：
+     videoRender_init(sprite, localUserId);
+   - 加入频道：
+     channel_join(channelName, localUserId, token);
+   - 在 onJoinChannelResult 成功后：
+     video_enableLocalCamera(true);
+     audio_enableLocalMicrophone(true);
+   - 游戏退出或功能关闭时：
+     channel_leave();
+     rtcEngine_destroy();
+
+3. 沙盒测试环境：
+   - 可执行程序：VideoCallSandbox（由 CMake 构建）；
+   - 默认配置文件：sandbox_config.json（与可执行文件同目录）；
+   - Windows 一键启动脚本：scripts/run_sandbox.bat
+   - macOS/Linux 一键启动脚本：scripts/run_sandbox.sh
+
+4. Android 平台接入要点：
+   - NDK 构建脚本：android/Android.mk, android/Application.mk；
+   - Java 封装类：android/java/com/cocos/rtc/VideoCallPlugin.java；
+   - 在 Java 层设置回调：VideoCallPlugin.setCallback(...);
+   - 通过 JNI 调用 C++ 核心接口，权限推荐使用 Android 原生 API，并结合 permission_* C 接口。
+
+5. iOS 平台接入要点：
+   - Objective-C++ 封装：ios/VideoCallPluginIOS.h/.mm；
+   - 对于 Cocos-2d-x C++ 游戏，直接包含 VideoCallPlugin.h 并使用 C 接口；
+   - 对于 UIKit/SwiftUI 沙盒 App，可通过 VideoCallPluginIOS.sharedInstance 调用权限接口，并实现 VideoCallPluginDelegate 观察状态。
